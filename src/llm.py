@@ -18,11 +18,11 @@ def perguntar_dados(pergunta, contexto):
     Analise exclusivamente o dataset fornecido.
 
     Regras:
+Sempre comece a resposta com o valor pedido por quem está fazendo a pergunta, sem rodeios. ou seja, se a pergunta for "Qual produto vendeu mais?", a resposta deve começar com o nome do produto que vendeu mais, seguido de uma breve explicação.
 
     - Não invente informações.
     - Se não houver dados suficientes,
       informe isso.
-    - Explique sua resposta.
     - Utilize números quando possível.
     - Responda em português.
 

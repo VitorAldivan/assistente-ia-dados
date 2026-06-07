@@ -1,11 +1,9 @@
 import streamlit as st
-import plotly.express as px
 
 from src.data_loader import carregar_arquivo
 from src.analysis import gerar_resumo
 from src.analysis import gerar_contexto_llm
 from src.llm import perguntar_dados
-from src.utils import identificar_colunas_numericas
 
 
 st.set_page_config(
@@ -16,7 +14,7 @@ st.set_page_config(
 st.title("📊 Assistente IA para Dados")
 
 arquivo = st.file_uploader(
-    "Envie um CSV ou Excel",
+    "Envie um arquivo CSV ou Excel",
     type=["csv", "xlsx"]
 )
 
@@ -24,31 +22,14 @@ if arquivo:
 
     df = carregar_arquivo(arquivo)
 
+    # mantém o dataframe inteiro disponível
+    st.session_state["df"] = df
+
     st.success("Arquivo carregado com sucesso!")
-
-    st.subheader("Visualização dos Dados")
-
-    st.write(f"Total de registros no dataset: {len(df)}")
-
-    quantidade = st.slider(
-        "Quantidade de linhas para visualizar",
-        min_value=1,
-        max_value=len(df),
-        value=min(20, len(df))
-    )
-
-    st.dataframe(
-        df.head(quantidade),
-        use_container_width=True
-    )
 
     resumo = gerar_resumo(df)
 
     st.subheader("Indicadores Gerais")
-
-    total_nulos = int(
-        df.isnull().sum().sum()
-    )
 
     col1, col2, col3 = st.columns(3)
 
@@ -67,63 +48,58 @@ if arquivo:
     with col3:
         st.metric(
             "Valores Nulos",
-            total_nulos
+            int(df.isnull().sum().sum())
         )
 
-    colunas_numericas = identificar_colunas_numericas(df)
+    st.subheader("Dados do Arquivo")
 
-    if colunas_numericas:
+    st.write(
+        f"Total de registros: {len(df)}"
+    )
 
-        st.subheader("Visualizações")
+    st.dataframe(
+        df,
+        use_container_width=True,
+        height=700
+    )
 
-        coluna = st.selectbox(
-            "Selecione uma coluna numérica",
-            colunas_numericas
-        )
+    st.subheader("🤖 Converse com seus Dados")
 
-        st.markdown("### Histograma")
-
-        fig_hist = px.histogram(
-            df,
-            x=coluna,
-            title=f"Distribuição de {coluna}"
-        )
-
-        st.plotly_chart(
-            fig_hist,
-            use_container_width=True
-        )
-
-        st.markdown("### Boxplot")
-
-        fig_box = px.box(
-            df,
-            y=coluna,
-            title=f"Boxplot de {coluna}"
-        )
-
-        st.plotly_chart(
-            fig_box,
-            use_container_width=True
-        )
-
-    st.subheader("🤖 Pergunte aos seus Dados")
+    st.info(
+        "Você pode perguntar sobre linhas, colunas, valores específicos, estatísticas e padrões do dataset."
+    )
 
     pergunta = st.text_area(
-        "Digite sua pergunta"
+        "Digite sua pergunta",
+        height=120,
+        placeholder="""
+Qual produto vendeu mais?
+"""
     )
 
     if st.button("Perguntar"):
 
-        with st.spinner("Analisando os dados..."):
+        if not pergunta.strip():
 
-            contexto = gerar_contexto_llm(df)
-
-            resposta = perguntar_dados(
-                pergunta,
-                contexto
+            st.warning(
+                "Digite uma pergunta."
             )
 
-        st.markdown("### Resposta")
+        else:
 
-        st.write(resposta)
+            with st.spinner(
+                "Analisando os dados..."
+            ):
+
+                contexto = gerar_contexto_llm(
+                    st.session_state["df"]
+                )
+
+                resposta = perguntar_dados(
+                    pergunta,
+                    contexto
+                )
+
+            st.markdown("### Resposta")
+
+            st.write(resposta)
