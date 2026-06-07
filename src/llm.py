@@ -11,26 +11,32 @@ modelo = genai.GenerativeModel(
 
 
 def perguntar_dados(pergunta, contexto):
-    """
-    Faz perguntas sobre o dataframe.
-    """
 
     prompt = f"""
-    Você é um analista de dados.
+    Você é um analista de dados sênior.
 
-    Contexto:
+    Analise exclusivamente o dataset fornecido.
+
+    Regras:
+
+    - Não invente informações.
+    - Se não houver dados suficientes,
+      informe isso.
+    - Explique sua resposta.
+    - Utilize números quando possível.
+    - Responda em português.
+
+    CONTEXTO:
 
     {contexto}
 
-    Pergunta:
+    PERGUNTA:
 
     {pergunta}
-
-    Responda de forma objetiva,
-    utilizando apenas informações
-    presentes no dataset.
     """
 
-    resposta = modelo.generate_content(prompt)
+    resposta = modelo.generate_content(
+        prompt
+    )
 
     return resposta.text
